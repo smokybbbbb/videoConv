@@ -165,9 +165,12 @@ function buildArgs(inName, outName, format, quality, res, fps) {
   /* fps */
   if (fps !== 'original') args.push('-r', fps);
 
-  /* resolution */
-  if (res !== 'original') {
-    args.push('-vf', `scale=-2:${res}`);
+  /* resolution — WebM บังคับ max 720p เพื่อลด WASM memory */
+  const targetRes = (format === 'webm' && res === 'original') ? '720'
+                  : (format === 'webm' && parseInt(res) > 720) ? '720'
+                  : res;
+  if (targetRes !== 'original') {
+    args.push('-vf', `scale=-2:${targetRes}`);
   }
 
   args.push('-threads', '1');
@@ -177,9 +180,10 @@ function buildArgs(inName, outName, format, quality, res, fps) {
     const preset = { 1:'ultrafast', 2:'fast', 3:'medium', 4:'slow' }[quality];
     args.push('-c:v','libx264','-crf',crf,'-preset',preset,'-c:a','aac','-b:a','128k');
   } else {
-    /* VP8 + fixed bitrate — เสถียรสุดใน WASM ไม่ memory overflow */
-    const bitrate = { 1:'300k', 2:'700k', 3:'1500k', 4:'3000k' }[quality];
-    args.push('-c:v','libvpx','-b:v',bitrate,'-deadline','realtime','-cpu-used','5','-c:a','libopus','-b:a','96k');
+    /* VP8 + libvorbis (opus crash ใน WASM) + realtime deadline ประหยัด memory */
+    const bitrate = { 1:'200k', 2:'500k', 3:'1000k', 4:'2000k' }[quality];
+    args.push('-c:v','libvpx','-b:v',bitrate,'-deadline','realtime','-cpu-used','5',
+              '-c:a','libvorbis','-q:a','4');
   }
 
   args.push('-y', outName);
