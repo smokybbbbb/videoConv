@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Converter</title>
+  <script src="https://cdn.jsdelivr.net/npm/coi-serviceworker@0.1.7/coi-serviceworker.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=2" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-inner">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M10 9l5 3-5 3V9z" fill="currentColor"/>
+        </svg>
+        <h1 class="logo-text">VideoConv</h1>
+      </div>
+    </header>
+    <p class="subtitle">แปลงและลดขนาดไฟล์วิดีโอได้ฟรี ไม่ต้องอัปโหลดไปยังเซิร์ฟเวอร์</p>
+
+    <main class="main">
+      <!-- Upload Zone -->
+      <section class="card upload-card" id="uploadCard">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 16V8m0 0l-3 3m3-3l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 15v3a2 2 0 002 2h14a2 2 0 002-2v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="drop-title">วางไฟล์วิดีโอที่นี่</p>
+          <p class="drop-sub">หรือ</p>
+          <label class="btn btn-outline" for="fileInput">เลือกไฟล์</label>
+          <input type="file" id="fileInput" accept="video/*" hidden />
+          <p class="drop-hint">รองรับ MP4, WebM, MOV, AVI, MKV และอื่นๆ</p>
+        </div>
+      </section>
+
+      <!-- File Info -->
+      <section class="card file-card hidden" id="fileCard">
+        <div class="file-info">
+          <div class="file-thumb" id="fileThumb">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 9l5 3-5 3V9z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="file-meta">
+            <p class="file-name" id="fileName">-</p>
+            <p class="file-size" id="fileSize">-</p>
+          </div>
+          <button class="btn-icon" id="clearBtn" title="ลบไฟล์">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section class="card settings-card hidden" id="settingsCard">
+        <h2 class="section-title">ตั้งค่าการแปลง</h2>
+
+        <div class="setting-row">
+          <label class="setting-label">รูปแบบไฟล์ที่ต้องการ</label>
+          <div class="format-group">
+            <label class="format-opt">
+              <input type="radio" name="format" value="mp4" checked />
+              <span class="format-btn">
+                <span class="format-badge mp4">MP4</span>
+                <span class="format-desc">เข้ากันได้กว้างที่สุด</span>
+              </span>
+            </label>
+            <label class="format-opt">
+              <input type="radio" name="format" value="webm" />
+              <span class="format-btn">
+                <span class="format-badge webm">WebM</span>
+                <span class="format-desc">เหมาะสำหรับเว็บ</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label" for="quality">คุณภาพวิดีโอ</label>
+          <div class="quality-row">
+            <input type="range" id="quality" min="1" max="4" value="2" step="1" class="slider" />
+            <span class="quality-label" id="qualityLabel">ปานกลาง</span>
+          </div>
+          <div class="quality-hints">
+            <span>ขนาดเล็กสุด</span>
+            <span>คุณภาพสูงสุด</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label" for="resolution">ความละเอียด</label>
+          <select id="resolution" class="select">
+            <option value="original">เดิม (ไม่เปลี่ยน)</option>
+            <option value="1080">1080p (Full HD)</option>
+            <option value="720">720p (HD)</option>
+            <option value="480">480p (SD)</option>
+            <option value="360">360p</option>
+          </select>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label" for="fps">เฟรมเรต (FPS)</label>
+          <select id="fps" class="select">
+            <option value="original">เดิม (ไม่เปลี่ยน)</option>
+            <option value="60">60 FPS</option>
+            <option value="30">30 FPS</option>
+            <option value="24">24 FPS</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary btn-convert" id="convertBtn">
+          <svg viewBox="0 0 24 24" fill="none" class="btn-icon-svg">
+            <path d="M4 12a8 8 0 018-8v2M20 12a8 8 0 01-8 8v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M16 4l-4 2 4 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          เริ่มแปลงไฟล์
+        </button>
+      </section>
+
+      <!-- Progress -->
+      <section class="card progress-card hidden" id="progressCard">
+        <div class="progress-header">
+          <div class="progress-spinner"></div>
+          <div>
+            <p class="progress-title" id="progressTitle">กำลังโหลด FFmpeg...</p>
+            <p class="progress-sub" id="progressSub">กรุณารอสักครู่</p>
+          </div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+        <p class="progress-pct" id="progressPct">0%</p>
+      </section>
+
+      <!-- Result -->
+      <section class="card result-card hidden" id="resultCard">
+        <div class="result-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="result-title">แปลงไฟล์สำเร็จ!</h2>
+        <div class="result-stats">
+          <div class="stat-item">
+            <span class="stat-label">ขนาดเดิม</span>
+            <span class="stat-val" id="origSize">-</span>
+          </div>
+          <div class="stat-arrow">→</div>
+          <div class="stat-item">
+            <span class="stat-label">ขนาดใหม่</span>
+            <span class="stat-val" id="newSize">-</span>
+          </div>
+          <div class="stat-item saving">
+            <span class="stat-label">ลดขนาด</span>
+            <span class="stat-val" id="savingPct">-</span>
+          </div>
+        </div>
+        <div class="result-actions">
+          <a class="btn btn-primary" id="downloadBtn" download>
+            <svg viewBox="0 0 24 24" fill="none" class="btn-icon-svg">
+              <path d="M12 3v13m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 19h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            ดาวน์โหลด
+          </a>
+          <button class="btn btn-outline" id="convertAnotherBtn">แปลงไฟล์อื่น</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>ประมวลผลในเบราว์เซอร์ — ไฟล์ไม่ถูกส่งไปยังเซิร์ฟเวอร์</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
