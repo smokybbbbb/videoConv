@@ -31,6 +31,7 @@ qualitySlider.addEventListener('input', () => {
 let selectedFile = null;
 let ffmpeg = null;
 let outputURL = null;
+let lastLog = '';
 
 /* ─── Drag & Drop ─── */
 dropZone.addEventListener('click', () => fileInput.click());
@@ -108,6 +109,7 @@ async function runConvert(format, quality, res, fps) {
     ffmpeg = new FFmpeg();
     ffmpeg.on('log', ({ message }) => {
       console.log('[ffmpeg]', message);
+      lastLog = message;
       const match = message.match(/time=(\d+:\d+:\d+)/);
       if (match) progressSub.textContent = 'เวลา: ' + match[1];
     });
@@ -137,7 +139,7 @@ async function runConvert(format, quality, res, fps) {
 
   const execAndCheck = async (a) => {
     const code = await ffmpeg.exec(a);
-    if (code !== 0) throw new Error(`FFmpeg exit code ${code}`);
+    if (code !== 0) throw new Error(`FFmpeg exit code ${code}\n\nlog: ${lastLog}`);
   };
 
   let args = buildArgs(inName, outName, format, quality, res, fps);
