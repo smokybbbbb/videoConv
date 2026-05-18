@@ -142,16 +142,8 @@ async function runConvert(format, quality, res, fps) {
     if (code !== 0) throw new Error(`FFmpeg exit code ${code}\n\nlog: ${lastLog}`);
   };
 
-  let args = buildArgs(inName, outName, format, quality, res, fps);
+  const args = buildArgs(inName, outName, format, quality, res, fps);
   await execAndCheck(args);
-
-  /* ถ้า output ว่างเปล่า (copy codec ไม่รองรับ) ลองใหม่ด้วย transcode */
-  const probe = await ffmpeg.readFile(outName).catch(() => null);
-  if (format === 'webm' && probe && probe.byteLength < 100) {
-    console.log('[VideoConv] copy failed, retrying with transcode...');
-    args = buildArgs(inName, outName, format, quality, res, fps, true);
-    await execAndCheck(args);
-  }
 
   const data = await ffmpeg.readFile(outName);
   const blob = new Blob([data.buffer], { type: format === 'mp4' ? 'video/mp4' : 'video/webm' });
@@ -175,7 +167,7 @@ async function runConvert(format, quality, res, fps) {
   resultCard.classList.remove('hidden');
 }
 
-function buildArgs(inName, outName, format, quality, res, fps, forceTranscode = false) {
+function buildArgs(inName, outName, format, quality, res, fps) {
   const args = ['-i', inName];
 
   if (fps !== 'original') args.push('-r', fps);
@@ -186,8 +178,6 @@ function buildArgs(inName, outName, format, quality, res, fps, forceTranscode = 
   if (format === 'mp4') {
     const crf = { 1:'51', 2:'35', 3:'23', 4:'18' }[quality];
     args.push('-c:v','libx264','-crf',crf,'-preset','ultrafast','-c:a','aac','-b:a','128k');
-  } else if (!forceTranscode && fps === 'original' && res === 'original') {
-    args.push('-c:v','copy','-c:a','libvorbis','-q:a','4');
   } else {
     const bitrate = { 1:'200k', 2:'500k', 3:'1000k', 4:'2000k' }[quality];
     args.push('-c:v','libvpx','-b:v',bitrate,'-deadline','realtime','-cpu-used','5',
