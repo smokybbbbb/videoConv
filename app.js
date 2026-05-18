@@ -137,13 +137,25 @@ async function runConvert(format, quality, res, fps) {
 
   await ffmpeg.writeFile(inName, await fetchFile(selectedFile));
 
-  const execAndCheck = async (a) => {
+  const execOrThrow = async (a) => {
     const code = await ffmpeg.exec(a);
-    if (code !== 0) throw new Error(`FFmpeg exit code ${code}\n\nlog: ${lastLog}`);
+    if (code !== 0) throw new Error(`exit:${code}`);
   };
 
-  const args = buildArgs(inName, outName, format, quality, res, fps);
-  await execAndCheck(args);
+  let args = buildArgs(inName, outName, format, quality, res, fps);
+  try {
+    await execOrThrow(args);
+  } catch (e) {
+    if (format === 'mp4' && e.message.startsWith('exit:')) {
+      /* retry: re-encode audio ด้วย aac แทน copy */
+      console.log('[VideoConv] audio copy failed, retrying with aac encode');
+      args = buildArgs(inName, outName, format, quality, res, fps, true);
+      const code2 = await ffmpeg.exec(args);
+      if (code2 !== 0) throw new Error(`FFmpeg exit code ${code2}\n\nlog: ${lastLog}`);
+    } else {
+      throw new Error(`FFmpeg\n\nlog: ${lastLog}`);
+    }
+  }
 
   const data = await ffmpeg.readFile(outName);
   const blob = new Blob([data.buffer], { type: format === 'mp4' ? 'video/mp4' : 'video/webm' });
@@ -167,7 +179,7 @@ async function runConvert(format, quality, res, fps) {
   resultCard.classList.remove('hidden');
 }
 
-function buildArgs(inName, outName, format, quality, res, fps) {
+function buildArgs(inName, outName, format, quality, res, fps, reencodeAudio = false) {
   const args = ['-i', inName];
 
   if (fps !== 'original') args.push('-r', fps);
@@ -177,7 +189,10 @@ function buildArgs(inName, outName, format, quality, res, fps) {
 
   if (format === 'mp4') {
     const crf = { 1:'51', 2:'35', 3:'23', 4:'18' }[quality];
-    args.push('-c:v','libx264','-crf',crf,'-preset','ultrafast','-c:a','aac','-b:a','128k');
+    const audio = reencodeAudio
+      ? ['-c:a','aac','-strict','-2','-b:a','128k']
+      : ['-c:a','copy'];
+    args.push('-c:v','libx264','-crf',crf,'-preset','ultrafast',...audio);
   } else {
     /* libvpx (VP8/VP9) abort ใน ffmpeg.wasm build นี้ — copy video, แปลงแค่ audio */
     args.push('-c:v','copy','-c:a','libvorbis','-q:a','4');
