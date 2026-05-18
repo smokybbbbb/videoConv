@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Video Converter</title>
-  <script src="https://cdn.jsdelivr.net/npm/coi-serviceworker@0.1.7/coi-serviceworker.min.js"></script>
+  <script src="coi-serviceworker.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -22,6 +22,10 @@
       </div>
     </header>
     <p class="subtitle">แปลงและลดขนาดไฟล์วิดีโอได้ฟรี ไม่ต้องอัปโหลดไปยังเซิร์ฟเวอร์</p>
+
+    <div class="banner hidden" id="coiBanner">
+      ⚠️ เบราว์เซอร์ไม่รองรับ SharedArrayBuffer — กรุณาเปิดผ่าน MAMP ที่ <code>http://localhost/videoConv/</code> หรือ deploy ขึ้น GitHub Pages
+    </div>
 
     <main class="main">
       <!-- Upload Zone -->
@@ -185,8 +189,8 @@
     </footer>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  <script src="lib/ffmpeg.js"></script>
+  <script src="lib/ffmpeg-util.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

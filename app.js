@@ -85,13 +85,26 @@ convertBtn.addEventListener('click', async () => {
   try {
     await runConvert(format, quality, res, fps);
   } catch (err) {
+    ffmpeg = null;
     progressCard.classList.add('hidden');
     settingsCard.classList.remove('hidden');
-    alert('เกิดข้อผิดพลาด: ' + err.message);
+    const msg = err?.message || String(err) || 'ไม่ทราบสาเหตุ';
+    showError(msg);
   }
 });
 
+function showError(msg) {
+  if (!crossOriginIsolated) {
+    msg = 'เบราว์เซอร์ไม่รองรับ SharedArrayBuffer (Cross-Origin Isolation)\n\nวิธีแก้: เปิดเว็บผ่าน MAMP ที่ http://localhost/videoConv/ แทน หรือ deploy ขึ้น GitHub Pages';
+  }
+  alert('เกิดข้อผิดพลาด:\n\n' + msg);
+}
+
 async function runConvert(format, quality, res, fps) {
+  if (!crossOriginIsolated) {
+    throw new Error('SharedArrayBuffer ไม่พร้อมใช้งาน');
+  }
+
   if (!ffmpeg) {
     progressTitle.textContent = 'กำลังโหลด FFmpeg...';
     progressSub.textContent = 'ครั้งแรกอาจใช้เวลาสักครู่';
@@ -173,6 +186,11 @@ function buildArgs(inName, outName, format, quality, res, fps) {
 
   args.push('-y', outName);
   return args;
+}
+
+/* ─── Cross-Origin check ─── */
+if (!crossOriginIsolated) {
+  document.getElementById('coiBanner').classList.remove('hidden');
 }
 
 /* ─── Helpers ─── */

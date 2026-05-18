@@ -371,6 +371,26 @@ body {
 .stat-arrow { font-size: 18px; color: var(--text-hint); margin-top: 10px; }
 .result-actions { display: flex; gap: 10px; justify-content: center; }
 
+/* ── Banner ── */
+.banner {
+  max-width: 700px;
+  margin: 12px auto 0;
+  padding: 12px 20px;
+  display: block;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #7a5800;
+  line-height: 1.5;
+}
+.banner code {
+  background: #fff3cd;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
 /* ── Footer ── */
 .footer {
   text-align: center;
