@@ -181,13 +181,11 @@ function buildArgs(inName, outName, format, quality, res, fps, forceTranscode = 
     const preset = { 1:'ultrafast', 2:'fast', 3:'medium', 4:'slow' }[quality];
     args.push('-c:v','libx264','-crf',crf,'-preset',preset,'-c:a','aac','-b:a','128k');
   } else if (!forceTranscode && fps === 'original' && res === 'original') {
-    /* copy video stream ตรงๆ — เร็วสุด ไม่ crash, แค่แปลง audio */
-    args.push('-c:v','copy','-c:a','libopus','-b:a','96k','-ar','48000');
+    args.push('-c:v','copy','-c:a','libvorbis','-q:a','4');
   } else {
-    /* re-encode เมื่อต้องเปลี่ยน fps/resolution หรือ copy ล้มเหลว */
     const bitrate = { 1:'200k', 2:'500k', 3:'1000k', 4:'2000k' }[quality];
     args.push('-c:v','libvpx','-b:v',bitrate,'-deadline','realtime','-cpu-used','5',
-              '-c:a','libopus','-b:a','96k','-ar','48000');
+              '-c:a','libvorbis','-q:a','4');
   }
 
   args.push('-y', outName);
