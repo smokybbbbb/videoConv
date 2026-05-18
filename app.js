@@ -94,9 +94,6 @@ convertBtn.addEventListener('click', async () => {
 });
 
 function showError(msg) {
-  if (!crossOriginIsolated) {
-    msg = 'เบราว์เซอร์ไม่รองรับ SharedArrayBuffer (Cross-Origin Isolation)\n\nวิธีแก้: เปิดเว็บผ่าน MAMP ที่ http://localhost/videoConv/ แทน หรือ deploy ขึ้น GitHub Pages';
-  }
   alert('เกิดข้อผิดพลาด:\n\n' + msg);
 }
 
@@ -180,10 +177,9 @@ function buildArgs(inName, outName, format, quality, res, fps) {
     const preset = { 1:'ultrafast', 2:'fast', 3:'medium', 4:'slow' }[quality];
     args.push('-c:v','libx264','-crf',crf,'-preset',preset,'-c:a','aac','-b:a','128k');
   } else {
-    /* VP8 — เสถียรกว่า VP9 ใน WASM, ไม่ memory overflow */
-    const qmin = { 1:'40', 2:'25', 3:'10', 4:'4' }[quality];
-    const qmax = { 1:'58', 2:'40', 3:'25', 4:'15' }[quality];
-    args.push('-c:v','libvpx','-qmin',qmin,'-qmax',qmax,'-b:v','0','-c:a','libopus','-b:a','128k');
+    /* VP8 + fixed bitrate — เสถียรสุดใน WASM ไม่ memory overflow */
+    const bitrate = { 1:'300k', 2:'700k', 3:'1500k', 4:'3000k' }[quality];
+    args.push('-c:v','libvpx','-b:v',bitrate,'-deadline','realtime','-cpu-used','5','-c:a','libopus','-b:a','96k');
   }
 
   args.push('-y', outName);
@@ -192,7 +188,7 @@ function buildArgs(inName, outName, format, quality, res, fps) {
 
 /* ─── Cross-Origin check ─── */
 if (!crossOriginIsolated) {
-  document.getElementById('coiBanner').classList.remove('hidden');
+  console.log('[VideoConv] SharedArrayBuffer not available — CrossOriginIsolated:', crossOriginIsolated);
 }
 
 /* ─── Helpers ─── */
