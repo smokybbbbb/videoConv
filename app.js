@@ -135,8 +135,16 @@ async function runConvert(format, quality, res, fps) {
 
   await ffmpeg.writeFile(inName, await fetchFile(selectedFile));
 
-  const args = buildArgs(inName, outName, format, quality, res, fps);
+  let args = buildArgs(inName, outName, format, quality, res, fps);
   await ffmpeg.exec(args);
+
+  /* ถ้า output ว่างเปล่า (copy codec ไม่รองรับ) ลองใหม่ด้วย transcode */
+  const probe = await ffmpeg.readFile(outName).catch(() => null);
+  if (format === 'webm' && probe && probe.byteLength < 100) {
+    console.log('[VideoConv] copy failed, retrying with transcode...');
+    args = buildArgs(inName, outName, format, quality, res, fps, true);
+    await ffmpeg.exec(args);
+  }
 
   const data = await ffmpeg.readFile(outName);
   const blob = new Blob([data.buffer], { type: format === 'mp4' ? 'video/mp4' : 'video/webm' });
@@ -160,15 +168,11 @@ async function runConvert(format, quality, res, fps) {
   resultCard.classList.remove('hidden');
 }
 
-function buildArgs(inName, outName, format, quality, res, fps) {
+function buildArgs(inName, outName, format, quality, res, fps, forceTranscode = false) {
   const args = ['-i', inName];
 
-  /* fps */
   if (fps !== 'original') args.push('-r', fps);
-
-  if (res !== 'original') {
-    args.push('-vf', `scale=-2:${res}`);
-  }
+  if (res !== 'original') args.push('-vf', `scale=-2:${res}`);
 
   args.push('-threads', '1');
 
@@ -176,7 +180,11 @@ function buildArgs(inName, outName, format, quality, res, fps) {
     const crf    = { 1:'51', 2:'35', 3:'23', 4:'18' }[quality];
     const preset = { 1:'ultrafast', 2:'fast', 3:'medium', 4:'slow' }[quality];
     args.push('-c:v','libx264','-crf',crf,'-preset',preset,'-c:a','aac','-b:a','128k');
+  } else if (!forceTranscode && fps === 'original' && res === 'original') {
+    /* copy video stream ตรงๆ — เร็วสุด ไม่ crash, แค่แปลง audio */
+    args.push('-c:v','copy','-c:a','libopus','-b:a','96k','-ar','48000');
   } else {
+    /* re-encode เมื่อต้องเปลี่ยน fps/resolution หรือ copy ล้มเหลว */
     const bitrate = { 1:'200k', 2:'500k', 3:'1000k', 4:'2000k' }[quality];
     args.push('-c:v','libvpx','-b:v',bitrate,'-deadline','realtime','-cpu-used','5',
               '-c:a','libopus','-b:a','96k','-ar','48000');
