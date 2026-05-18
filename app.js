@@ -179,9 +179,8 @@ function buildArgs(inName, outName, format, quality, res, fps) {
     const crf = { 1:'51', 2:'35', 3:'23', 4:'18' }[quality];
     args.push('-c:v','libx264','-crf',crf,'-preset','ultrafast','-c:a','aac','-b:a','128k');
   } else {
-    const bitrate = { 1:'200k', 2:'500k', 3:'1000k', 4:'2000k' }[quality];
-    args.push('-c:v','libvpx','-b:v',bitrate,'-deadline','realtime','-cpu-used','5',
-              '-c:a','libvorbis','-q:a','4');
+    /* libvpx (VP8/VP9) abort ใน ffmpeg.wasm build นี้ — copy video, แปลงแค่ audio */
+    args.push('-c:v','copy','-c:a','libvorbis','-q:a','4');
   }
 
   args.push('-y', outName);
