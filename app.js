@@ -173,15 +173,17 @@ function buildArgs(inName, outName, format, quality, res, fps) {
     args.push('-vf', `scale=-2:${res}`);
   }
 
+  args.push('-threads', '1');
+
   if (format === 'mp4') {
-    /* CRF: quality 1→51, 2→35, 3→23, 4→18 */
-    const crf = { 1:'51', 2:'35', 3:'23', 4:'18' }[quality];
+    const crf    = { 1:'51', 2:'35', 3:'23', 4:'18' }[quality];
     const preset = { 1:'ultrafast', 2:'fast', 3:'medium', 4:'slow' }[quality];
     args.push('-c:v','libx264','-crf',crf,'-preset',preset,'-c:a','aac','-b:a','128k');
   } else {
-    /* WebM / VP9 — b:v 0 with crf for quality-based */
-    const crf = { 1:'63', 2:'45', 3:'33', 4:'24' }[quality];
-    args.push('-c:v','libvpx-vp9','-crf',crf,'-b:v','0','-c:a','libopus','-b:a','128k');
+    /* VP8 — เสถียรกว่า VP9 ใน WASM, ไม่ memory overflow */
+    const qmin = { 1:'40', 2:'25', 3:'10', 4:'4' }[quality];
+    const qmax = { 1:'58', 2:'40', 3:'25', 4:'15' }[quality];
+    args.push('-c:v','libvpx','-qmin',qmin,'-qmax',qmax,'-b:v','0','-c:a','libopus','-b:a','128k');
   }
 
   args.push('-y', outName);
